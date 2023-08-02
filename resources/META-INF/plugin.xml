@@ -1,0 +1,46 @@
+<idea-plugin>
+    <id>com.dali.autonote</id>
+    <name>auto-note</name>
+    <version>1.0</version>
+    <vendor email="976723984@qq.com" url="">Dali</vendor>
+
+    <description><![CDATA[
+      Enter short description for your plugin here.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+    <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+    </change-notes>
+
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html for description -->
+    <idea-version since-build="173.0"/>
+
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <projectConfigurable displayName="Auto Note Config" instance="com.dali.autonote.AnalysisMethodCodeConfig"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+        <action class="com.dali.autonote.AnalysisMethodCodeHandler" text="分析当前方法" description="一键分析方法内代码，并逐行生成注释">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+        <!--        <action class="com.dali.autonote.AnalysisCodeHandler" text="分析当前类" description="一键分析当前类内的所有方法代码，并逐行生成注释，耗时较久。">-->
+        <!--            <add-to-group group-id="EditorPopupMenu" anchor="last"/>-->
+        <!--        </action>-->
+        <action class="com.dali.autonote.AnalysisMethodResultHolder" text="清除分析结果缓存" description="清除分析结果缓存">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.java</depends>
+</idea-plugin>
