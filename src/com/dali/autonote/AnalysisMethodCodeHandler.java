@@ -1,5 +1,22 @@
 package com.dali.autonote;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffManagerEx;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.DiffRequestPanel;
+import com.intellij.diff.InvalidDiffRequestException;
+import com.intellij.diff.actions.CompareFileWithEditorAction;
+import com.intellij.diff.actions.impl.MutableDiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.editor.DiffRequestProcessorEditor;
+import com.intellij.diff.impl.DiffRequestPanelImpl;
+import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +30,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -20,6 +39,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.codereview.diff.MutableDiffRequestChainProcessor;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.SimpleHttpConnectionManager;
@@ -27,10 +47,12 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class AnalysisMethodCodeHandler extends AnAction {
@@ -53,14 +75,18 @@ public class AnalysisMethodCodeHandler extends AnAction {
                 ApplicationManager.getApplication().runReadAction(() -> {
                     String value = analysis(anActionEvent);
                     ApplicationManager.getApplication().invokeLater(() -> {
-                        show(anActionEvent, value);
+                        try {
+                            show(anActionEvent, value);
+                        } catch (InvalidDiffRequestException e) {
+                            throw new RuntimeException(e.getMessage(), e);
+                        }
                     });
                 });
             }
         });
     }
 
-    private void show(AnActionEvent anActionEvent, String contentStr) {
+    private void show(AnActionEvent anActionEvent, String contentStr) throws InvalidDiffRequestException {
         Project project = anActionEvent.getProject();
         if (project == null) {
             Messages.showMessageDialog("Project is null", "Error", Messages.getErrorIcon());
@@ -81,24 +107,38 @@ public class AnalysisMethodCodeHandler extends AnAction {
             Messages.showMessageDialog("PsiFile is null", "Error", Messages.getErrorIcon());
             return;
         }
-        // 创建一个文档对象
-        Document document = EditorFactory.getInstance().createDocument(contentStr);
-        // 创建一个编辑器对象
-        EditorEx tempEditor = (EditorEx) EditorFactory.getInstance().createEditor(document, project);
-        tempEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, psiFile.getFileType()));
-        tempEditor.setViewer(true);
 
-        // 创建一个滚动窗格来包含编辑器
-        JScrollPane scrollPane = new JBScrollPane(tempEditor.getComponent());
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement element = psiFile.findElementAt(offset);
+        PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+        if (method == null) {
+            Messages.showMessageDialog("Method is null", "Error", Messages.getErrorIcon());
+            return;
+        }
 
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        // 创建一个对话框
-        JDialog dialog = new JDialog();
-        dialog.setTitle("Analysis Result");
-        dialog.setContentPane(scrollPane);
-        dialog.setSize((int) (screenSize.width * 0.8), (int) (screenSize.height * 0.8));
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
+        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+        if (document == null) {
+            Messages.showMessageDialog("Document is null", "Error", Messages.getErrorIcon());
+            return;
+        }
+
+//        DiffContent localContent = DiffContentFactory.getInstance().create(project, document);
+//        DiffContent analyzedContent = DiffContentFactory.getInstance().create(project, contentStr, psiFile.getFileType());
+
+//        // 创建一个滚动窗格来包含编辑器
+//        JScrollPane scrollPane = new JBScrollPane(tempEditor.getComponent());
+//
+//        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+//        // 创建一个对话框
+//        JDialog dialog = new JDialog();
+//        dialog.setTitle("Analysis Result");
+//        dialog.setContentPane(scrollPane);
+//        dialog.setSize((int) (screenSize.width * 0.8), (int) (screenSize.height * 0.8));
+//        dialog.setLocationRelativeTo(null);
+//        dialog.setVisible(true);
+        MutableDiffRequestChain chain = BaseShowDiffAction.createMutableChainFromFiles(project, method.getText(), contentStr);
+
+        DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
     }
 
     /**
@@ -188,10 +228,10 @@ public class AnalysisMethodCodeHandler extends AnAction {
                 ChatGptMessage message = choice.getMessage();
                 return message == null ? "分析无结果" : message.getContent();
             } else {
-                throw new RuntimeException("网络异常");
+                throw new RuntimeException("网络异常" + statusCode);
             }
         } catch (Exception e) {
-            throw new RuntimeException("分析失败", e);
+            throw new RuntimeException("分析失败，" + e.getMessage(), e);
         }
     }
 }

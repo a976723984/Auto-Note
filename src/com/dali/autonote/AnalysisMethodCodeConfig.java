@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class AnalysisMethodCodeConfig implements Configurable {
     private JTextField apiKeyField;
@@ -15,7 +16,7 @@ public class AnalysisMethodCodeConfig implements Configurable {
     private static String apiKey = null;
     private static String proxyHost = null;
     private static Integer proxyPort = null;
-    private final static String testApiKey = "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";
+    private final static String testApiKey = "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";
 
     @Override
     public String getDisplayName() {
@@ -25,7 +26,7 @@ public class AnalysisMethodCodeConfig implements Configurable {
     @Override
     public JComponent createComponent() {
         JPanel jPanel = new JPanel();
-        jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
+        jPanel.setLayout(new FlowLayout());
         JLabel apiKeyLabel = new JLabel("ChatGPT API Key：", JLabel.LEFT);
         apiKeyField = new JTextField(20);
         if (apiKey != null) {
@@ -63,13 +64,10 @@ public class AnalysisMethodCodeConfig implements Configurable {
         apiKey = apiKeyField.getText();
         proxyHost = proxyHostField.getText();
         proxyPort = Integer.parseInt(proxyPortField.getText());
-        apiKeyField = null;
-        proxyHostField = null;
-        proxyPortField = null;
     }
 
     public static String getApiKey() {
-//        apiKey = testApiKey;
+        apiKey = testApiKey;
         if (apiKey == null || apiKey.length() == 0) {
             Messages.showMessageDialog("Please set ChatGPT API Key", "Error", Messages.getErrorIcon());
         }
@@ -77,15 +75,16 @@ public class AnalysisMethodCodeConfig implements Configurable {
     }
 
     public static String getProxyHost() {
-//        proxyHost = "127.0.0.1";
+        proxyHost = "127.0.0.1";
         if (proxyHost == null || proxyHost.length() == 0) {
             Messages.showMessageDialog("Please set proxy host", "Error", Messages.getErrorIcon());
         }
+
         return proxyHost;
     }
 
     public static Integer getProxyPort() {
-//        proxyPort = 18083;
+        proxyPort = 18083;
         if (proxyPort == null) {
             Messages.showMessageDialog("Please set proxy port", "Error", Messages.getErrorIcon());
         }
