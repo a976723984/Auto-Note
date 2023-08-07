@@ -13,10 +13,9 @@ public class AnalysisMethodCodeConfig implements Configurable {
     private JTextField proxyHostField;
     private JTextField proxyPortField;
 
-    private static String apiKey = null;
-    private static String proxyHost = null;
-    private static Integer proxyPort = null;
-    private final static String testApiKey = "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";
+    private static String apiKey = "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";
+    private static String proxyHost = "127.0.0.1";
+    private static Integer proxyPort = 18083;
 
     @Override
     public String getDisplayName() {
@@ -67,7 +66,6 @@ public class AnalysisMethodCodeConfig implements Configurable {
     }
 
     public static String getApiKey() {
-        apiKey = testApiKey;
         if (apiKey == null || apiKey.length() == 0) {
             Messages.showMessageDialog("Please set ChatGPT API Key", "Error", Messages.getErrorIcon());
         }
@@ -75,7 +73,6 @@ public class AnalysisMethodCodeConfig implements Configurable {
     }
 
     public static String getProxyHost() {
-        proxyHost = "127.0.0.1";
         if (proxyHost == null || proxyHost.length() == 0) {
             Messages.showMessageDialog("Please set proxy host", "Error", Messages.getErrorIcon());
         }
@@ -84,7 +81,6 @@ public class AnalysisMethodCodeConfig implements Configurable {
     }
 
     public static Integer getProxyPort() {
-        proxyPort = 18083;
         if (proxyPort == null) {
             Messages.showMessageDialog("Please set proxy port", "Error", Messages.getErrorIcon());
         }
