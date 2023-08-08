@@ -1,36 +1,19 @@
 package com.dali.autonote;
 
-import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.DiffManagerEx;
-import com.intellij.diff.DiffRequestFactory;
-import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.InvalidDiffRequestException;
-import com.intellij.diff.actions.CompareFileWithEditorAction;
 import com.intellij.diff.actions.impl.MutableDiffRequestChain;
-import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.editor.DiffRequestProcessorEditor;
-import com.intellij.diff.impl.DiffRequestPanelImpl;
-import com.intellij.diff.merge.MergeRequest;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -38,8 +21,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.codereview.diff.MutableDiffRequestChainProcessor;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.SimpleHttpConnectionManager;
@@ -47,12 +28,8 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class AnalysisMethodCodeHandler extends AnAction {
@@ -122,21 +99,7 @@ public class AnalysisMethodCodeHandler extends AnAction {
             return;
         }
 
-//        DiffContent localContent = DiffContentFactory.getInstance().create(project, document);
-//        DiffContent analyzedContent = DiffContentFactory.getInstance().create(project, contentStr, psiFile.getFileType());
-
-//        // 创建一个滚动窗格来包含编辑器
-//        JScrollPane scrollPane = new JBScrollPane(tempEditor.getComponent());
-//
-//        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-//        // 创建一个对话框
-//        JDialog dialog = new JDialog();
-//        dialog.setTitle("Analysis Result");
-//        dialog.setContentPane(scrollPane);
-//        dialog.setSize((int) (screenSize.width * 0.8), (int) (screenSize.height * 0.8));
-//        dialog.setLocationRelativeTo(null);
-//        dialog.setVisible(true);
-        MutableDiffRequestChain chain = BaseShowDiffAction.createMutableChainFromFiles(project, method.getText(), contentStr);
+        MutableDiffRequestChain chain = BaseShowDiffAction.createMutableChainFromFiles(project, method.getText(), contentStr, psiFile);
 
         DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
     }
@@ -149,18 +112,26 @@ public class AnalysisMethodCodeHandler extends AnAction {
      */
     private String getMethodName(PsiMethod psiMethod) {
         // 获取包含该方法的类的完全限定名
+        // 应用IntelliJ IDEA的程序结构接口（PSI），获取该方法所在类的全限定名称，例如：com.example.MyClass
         String qualifiedClassName = psiMethod.getContainingClass().getQualifiedName();
 
         // 获取方法名
+        // 获取当前psiMethod对象代表的方法的名称
         String methodName = psiMethod.getName();
 
         // 获取参数类型列表
+        // 使用getParameters()方法获取该方法的参数列表，并将其转化为数组形式
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+
+        // 让参数类型列表流，并获取其类型的全名，最后将其连接成一个以逗号分隔的字符串
+        // 例如："int,String"
         String parameterTypes = Arrays.stream(parameters)
                 .map(p -> p.getType().getCanonicalText())
                 .collect(Collectors.joining(","));
 
         // 组合以上信息生成唯一标识
+        // 将全限定类名，方法名和参数类型列表以特定格式拼接在一起，形成一个唯一的方法签名字符串，例如：
+        // "com.example.MyClass.methodName(int,String)"
         return qualifiedClassName + "." + methodName + "(" + parameterTypes + ")";
     }
 
