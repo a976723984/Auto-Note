@@ -10,12 +10,14 @@ import java.awt.*;
 
 public class AnalysisMethodCodeConfig implements Configurable {
     private JTextField apiKeyField;
+    private JTextField moduleField;
     private JTextField proxyHostField;
     private JTextField proxyPortField;
 
     private static String apiKey = "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";
     private static String proxyHost = "127.0.0.1";
     private static Integer proxyPort = 18083;
+    private static String module = "gpt-3.5-turbo";
 
     @Override
     public String getDisplayName() {
@@ -25,14 +27,22 @@ public class AnalysisMethodCodeConfig implements Configurable {
     @Override
     public JComponent createComponent() {
         JPanel jPanel = new JPanel();
-        jPanel.setLayout(new FlowLayout());
+        jPanel.setLayout(new GridLayout(2, 4));
         JLabel apiKeyLabel = new JLabel("ChatGPT API Key：", JLabel.LEFT);
-        apiKeyField = new JTextField(20);
+        apiKeyField = new JTextField(30);
         if (apiKey != null) {
             apiKeyField.setText(apiKey);
         }
         jPanel.add(apiKeyLabel);
         jPanel.add(apiKeyField);
+
+        JLabel moduleLabel = new JLabel("Module：", JLabel.LEFT);
+        moduleField = new JTextField(10);
+        if (module != null) {
+            moduleField.setText(module);
+        }
+        jPanel.add(moduleLabel);
+        jPanel.add(moduleField);
 
         JLabel proxyHostLabel = new JLabel("Proxy Host：", JLabel.LEFT);
         proxyHostField = new JTextField(20);
@@ -63,6 +73,7 @@ public class AnalysisMethodCodeConfig implements Configurable {
         apiKey = apiKeyField.getText();
         proxyHost = proxyHostField.getText();
         proxyPort = Integer.parseInt(proxyPortField.getText());
+        module = moduleField.getText();
     }
 
     public static String getApiKey() {
@@ -85,5 +96,12 @@ public class AnalysisMethodCodeConfig implements Configurable {
             Messages.showMessageDialog("Please set proxy port", "Error", Messages.getErrorIcon());
         }
         return proxyPort;
+    }
+
+    public static String getModule() {
+        if (module == null) {
+            Messages.showMessageDialog("Please set module", "Error", Messages.getErrorIcon());
+        }
+        return module;
     }
 }

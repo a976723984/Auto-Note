@@ -180,7 +180,7 @@ public class AnalysisMethodCodeHandler extends AnAction {
 
             ChatGptMessage systemMessage = ChatGptMessage.of(ChatGptQueryDTO.Role.SYSTEM, BASE_PROMPT);
             ChatGptMessage userMessage = ChatGptMessage.of(ChatGptQueryDTO.Role.USER, content);
-            ChatGptQueryDTO query = ChatGptQueryDTO.of("gpt-4", Arrays.asList(systemMessage, userMessage));
+            ChatGptQueryDTO query = ChatGptQueryDTO.of(AnalysisMethodCodeConfig.getModule(), Arrays.asList(systemMessage, userMessage));
 
             post.setRequestEntity(new StringRequestEntity(ObjectMapperUtil.getInstance().writeValueAsString(query), "application/json", "UTF-8"));
 
