@@ -1,12 +1,21 @@
 package com.dali.autonote;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class AnalysisMethodCodeConfig implements Configurable {
     private JTextField apiKeyField;
@@ -26,6 +35,8 @@ public class AnalysisMethodCodeConfig implements Configurable {
 
     @Override
     public JComponent createComponent() {
+        init();
+
         JPanel jPanel = new JPanel();
         jPanel.setLayout(new GridLayout(2, 4));
         JLabel apiKeyLabel = new JLabel("ChatGPT API Key：", JLabel.LEFT);
@@ -74,6 +85,57 @@ public class AnalysisMethodCodeConfig implements Configurable {
         proxyHost = proxyHostField.getText();
         proxyPort = Integer.parseInt(proxyPortField.getText());
         module = moduleField.getText();
+        persist();
+    }
+
+    public void init() {
+        try {
+            String path = PathManager.getConfigPath() + "/auto-note/settings.txt";
+            if (FileUtil.exists(path)) {
+                BufferedReader reader = new BufferedReader(new FileReader(path));
+
+                for (int i = 0; i < 4; i++) {
+                    String value = reader.readLine();
+                    switch (i) {
+                        case 0: {
+                            apiKey = value;
+                        }
+                        break;
+                        case 1: {
+                            proxyHost = value;
+                        }
+                        break;
+                        case 2: {
+                            proxyPort = Integer.parseInt(value);
+                        }
+                        break;
+                        case 3: {
+                            module = value;
+                        }
+                        break;
+                        default:
+                    }
+                }
+                reader.close();
+            }
+        } catch (Exception e) {
+            Messages.showMessageDialog("init configuration error" + e.getMessage(), "Error", Messages.getErrorIcon());
+        }
+    }
+
+    public void persist() {
+        try {
+            String value = String.join("\n", apiKey, proxyHost, String.valueOf(proxyPort), module);
+            String path = PathManager.getConfigPath() + "/auto-note";
+            if (!FileUtil.exists(path)) {
+                Files.createDirectories(Paths.get(path));
+            }
+            BufferedWriter writer = new BufferedWriter(new FileWriter(path + "/settings.txt"));
+            writer.write(value, 0, value.length());
+            writer.close();
+        } catch (Exception e) {
+            Messages.showMessageDialog("persist configuration error" + e.getMessage(), "Error", Messages.getErrorIcon());
+        }
     }
 
     public static String getApiKey() {
